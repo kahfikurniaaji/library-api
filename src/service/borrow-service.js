@@ -75,6 +75,7 @@ const borrowBook = async ({ book_code, member_code }) => {
     ).then((result) => result[1][0].dataValues);
 
     convertTimeBorrowing(borrowingResult);
+    console.log(borrowingResult);
 
     return borrowingResult;
   });
@@ -153,75 +154,50 @@ const returnBook = async ({ book_code, member_code }) => {
   return result;
 };
 
-//
-const getBorrowings = async () => {
+// Service for get all borrow book
+const getBorrowedBooks = async ({ book, member }) => {
+  console.log({ member });
+  let query;
+  if (member || book) {
+    query = {};
+    book ? (query.book_code = book) : undefined;
+    member ? (query.member_code = member) : undefined;
+  }
+  console.log(query);
   const result = await Borrowing.findAll({
     order: [["borrow_date", "DESC"]],
+    attributes: ["code", "borrow_date", "return_date"],
+    include: [
+      { model: Book, attributes: ["code", "title", "author"] },
+      {
+        model: Member,
+        attributes: ["code", "name", "borrowed_count", "penalty_duration"],
+      },
+    ],
+    where: query,
   }).then((result) => {
-    result = result.map((value) => value.dataValues);
+    result = result.map((value) => {
+      value = value.dataValues;
+      convertTimeBorrowing(value);
+      return value;
+    });
     return result;
   });
 
   return result;
 };
 
-const getBorrowingByCode = async (code) => {
-  if (!(await borrowingIsExist(code))) {
-    throw new NotFoundError("Borrowing is not exist");
-  }
-  const result = await Borrowing.findOne({
-    where: { code },
-    include: [Book],
-  }).then((result) => result.dataValues);
-  console.log(result);
-
-  return result;
-};
-
-// Service for update borrowing
-const updateBorrowingByCode = async (code, borrowing) => {
+// Service for get detail borrowed book
+const getDetailBorrowedBook = async (code) => {
   if (!(await borrowingIsExist(code))) {
     throw new NotFoundError("Borrowing is not exist");
   }
 
-  if ((await borrowingIsExist(borrowing.code)) && code !== borrowing.code) {
-    throw new ConflictError("Borrowing code is already in use");
-  }
+  const result = await Borrowing.findOne({ where: { code } })
+    .then((result) => result.dataValues)
+    .catch((error) => console.log(error));
 
-  const result = await sequelize.transaction(async (t) => {
-    const borrowingResult = await Borrowing.update(
-      {
-        code: borrowing.code.trim(),
-        title: borrowing.title.trim(),
-        author: borrowing.author.trim(),
-        stock: borrowing.stock,
-      },
-      { where: { code: code.trim() }, returning: true, transaction: t }
-    ).then((result) => result[1][0].dataValues);
-
-    convertTimeBorrowing(borrowingResult);
-
-    return borrowingResult;
-  });
-
-  return result;
-};
-
-// Service for delete borrowing
-const deleteBorrowingByCode = async (code) => {
-  if (!(await borrowingIsExist(code))) {
-    throw new NotFoundError("Borrowing is not exist");
-  }
-
-  const result = await sequelize.transaction(async (t) => {
-    const borrowingResult = await Borrowing.destroy({
-      where: { code },
-      returning: true,
-      transaction: t,
-    }).then((result) => result[0].dataValues);
-
-    return borrowingResult;
-  });
+  convertTimeBorrowing(result);
 
   return result;
 };
@@ -244,7 +220,7 @@ const memberIsExist = async (code) => {
   return member !== null;
 };
 
-//
+// Service for check if book has borrowed
 const hasBorrowedTheBook = async (bookCode, memberCode) => {
   const result = await Borrowing.findOne({
     where: {
@@ -268,5 +244,6 @@ const convertTimeBorrowing = (data) => {
 export default {
   borrowBook,
   returnBook,
-  getBorrowingByCode,
+  getDetailBorrowedBook,
+  getBorrowedBooks,
 };

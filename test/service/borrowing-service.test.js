@@ -1,7 +1,6 @@
 import ConflictError from "../../src/exception/conflict-error.js";
-import NotFoundError from "../../src/exception/not-found-error.js";
 import Book from "../../src/model/book.js";
-import borrowingService from "../../src/service/borrowing-service.js";
+import borrowingService from "../../src/service/borrow-service.js";
 import memberService from "../../src/service/member-service.js";
 import bookService from "../../src/service/book-service.js";
 import Member from "../../src/model/member.js";
@@ -51,9 +50,13 @@ const member3 = {
 
 // Action before each
 beforeEach(async () => {
-  await Borrowing.truncate({ force: true, restartIdentity: true });
-  await Book.truncate({ force: true });
-  await Member.truncate({ force: true });
+  await Borrowing.truncate({
+    force: true,
+    restartIdentity: true,
+    cascade: true,
+  });
+  await Book.truncate({ force: true, cascade: true });
+  await Member.truncate({ force: true, cascade: true });
 });
 
 // Test borrow book service
@@ -89,7 +92,6 @@ test("test return book service", async () => {
   await bookService.addBook(book1);
   await memberService.addMember(member1);
   await borrowingService.borrowBook(borrowing1);
-  await borrowingService.getBorrowingByCode(1);
   const result = await borrowingService.returnBook(borrowing1);
   Object.keys(borrowing1).forEach(async (key) => {
     await expect(result).toHaveProperty(key, borrowing1[key]);
@@ -98,7 +100,11 @@ test("test return book service", async () => {
 
 // Action before each
 afterEach(async () => {
-  await Borrowing.truncate({ force: true, restartIdentity: true });
-  await Book.truncate({ force: true });
-  await Member.truncate({ force: true });
+  await Borrowing.truncate({
+    force: true,
+    restartIdentity: true,
+    cascade: true,
+  });
+  await Book.truncate({ force: true, cascade: true });
+  await Member.truncate({ force: true, cascade: true });
 });

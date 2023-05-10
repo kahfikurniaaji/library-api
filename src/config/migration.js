@@ -11,7 +11,6 @@ const generateTable = async () => {
 const createRelations = async () => {
   Book.hasMany(Borrowing, { foreignKey: "book_code" });
   Borrowing.belongsTo(Book, { foreignKey: "book_code" });
-
   Member.hasMany(Borrowing, { foreignKey: "member_code" });
   Borrowing.belongsTo(Member, { foreignKey: "member_code" });
 };

@@ -63,17 +63,28 @@ const updateBookByCode = async (code, book) => {
     throw new NotFoundError("Book is not exist");
   }
 
-  if ((await bookIsExist(book.code)) && code !== book.code) {
-    throw new ConflictError("Book code is already in use");
+  const newBook = await Book.findOne({ where: { code: code.trim() } }).then(
+    (result) => result.dataValues
+  );
+
+  newBook.code = book.code?.trim() || newBook.code;
+  newBook.title = book.title?.trim() || newBook.title;
+  newBook.author = book.author?.trim() || newBook.author;
+  newBook.stock = book.code?.trim() || newBook.stock;
+
+  if (book.code) {
+    if ((await bookIsExist(book?.code)) && code !== book?.code) {
+      throw new ConflictError("Book code is already in use");
+    }
   }
 
   const result = await sequelize.transaction(async (t) => {
     const bookResult = await Book.update(
       {
-        code: book.code.trim(),
-        title: book.title.trim(),
-        author: book.author.trim(),
-        stock: book.stock,
+        code: newBook.code,
+        title: newBook.title,
+        author: newBook.author,
+        stock: newBook.stock,
       },
       { where: { code: code.trim() }, returning: true, transaction: t }
     ).then((result) => result[1][0].dataValues);

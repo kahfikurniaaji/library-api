@@ -6,7 +6,7 @@ const Borrowing = database.define(
   "borrowing",
   {
     code: {
-      type: DataTypes.BIGINT,
+      type: DataTypes.INTEGER,
       primaryKey: true,
       allowNull: false,
       autoIncrement: true,

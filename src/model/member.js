@@ -16,6 +16,7 @@ const Member = database.define(
     },
     borrowed_count: {
       type: DataTypes.INTEGER,
+      defaultValue: 0,
       allowNull: false,
     },
     penalty_duration: {

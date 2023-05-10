@@ -17,7 +17,7 @@ const member2 = {
 
 // Action before each
 beforeEach(async () => {
-  await Member.truncate({ force: true });
+  await Member.truncate({ force: true, cascade: true });
 });
 
 // Test add member service
@@ -113,5 +113,5 @@ test("test delete member by code service", async () => {
 
 // Action after each
 afterEach(async () => {
-  await Member.truncate({ force: true });
+  await Member.truncate({ force: true, cascade: true });
 });

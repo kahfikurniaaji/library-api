@@ -21,7 +21,7 @@ const book2 = {
 
 // Action before each
 beforeEach(async () => {
-  await Book.truncate({ force: true });
+  await Book.truncate({ force: true, cascade: true });
 });
 
 // Test add book service
@@ -117,5 +117,5 @@ test("test delete book by code service", async () => {
 
 // Action after each
 afterEach(async () => {
-  await Book.truncate({ force: true });
+  await Book.truncate({ force: true, cascade: true });
 });

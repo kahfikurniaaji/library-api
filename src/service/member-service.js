@@ -13,7 +13,6 @@ const addMember = async ({ code, name }) => {
   const member = {
     code: code.trim(),
     name: name.trim(),
-    borrowed_count: 0,
   };
 
   const result = await sequelize.transaction(async (t) => {
@@ -63,16 +62,29 @@ const updateMemberByCode = async (code, member) => {
     throw new NotFoundError("Member is not exist");
   }
 
-  if ((await memberIsExist(member.code)) && code !== member.code) {
-    throw new ConflictError("Member code is already in use");
+  const newMember = await Member.findOne({ where: { code: code.trim() } }).then(
+    (result) => result.dataValues
+  );
+
+  newMember.code = member.code?.trim() || newMember.code;
+  newMember.name = member.name?.trim() || newMember.name;
+  newMember.borrowed_count = member.borrowed_count || newMember.borrowed_count;
+  newMember.penalty_duration =
+    member.penalty_duration || newMember.penalty_duration;
+
+  if (member.code) {
+    if ((await memberIsExist(member.code)) && code !== member.code) {
+      throw new ConflictError("Member code is already in use");
+    }
   }
 
   const result = await sequelize.transaction(async (t) => {
     const memberResult = await Member.update(
       {
-        code: member.code.trim(),
-        name: member.name.trim(),
-        borrowed_count: member.borrowed_count,
+        code: newMember.code,
+        name: newMember.name,
+        borrowed_count: newMember.borrowed_count,
+        penalty_duration: newMember.penalty_duration,
       },
       { where: { code: code.trim() }, returning: true, transaction: t }
     ).then((result) => result[1][0].dataValues);
