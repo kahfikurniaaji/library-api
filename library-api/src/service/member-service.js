@@ -103,6 +103,16 @@ const deleteMemberByCode = async (code) => {
     throw new NotFoundError("Member is not exist");
   }
 
+  const member = await Member.findOne({ where: { code: code.trim() } }).then(
+    (result) => result.dataValues
+  );
+
+  if (member.borrowed_count > 0) {
+    throw new ForbiddenError(
+      "Member can't unregister under borrowing the book"
+    );
+  }
+
   const result = await sequelize.transaction(async (t) => {
     const memberResult = await Member.destroy({
       where: { code: code.trim() },

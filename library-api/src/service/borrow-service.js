@@ -163,7 +163,7 @@ const getBorrowedBooks = async ({ book, member }) => {
     book ? (query.book_code = book) : undefined;
     member ? (query.member_code = member) : undefined;
   }
-  console.log(query);
+
   const result = await Borrowing.findAll({
     order: [["borrow_date", "DESC"]],
     attributes: ["code", "borrow_date", "return_date"],
@@ -193,7 +193,17 @@ const getDetailBorrowedBook = async (code) => {
     throw new NotFoundError("Borrowing is not exist");
   }
 
-  const result = await Borrowing.findOne({ where: { code } })
+  const result = await Borrowing.findOne({
+    attributes: ["code", "borrow_date", "return_date"],
+    include: [
+      { model: Book, attributes: ["code", "title", "author"] },
+      {
+        model: Member,
+        attributes: ["code", "name", "borrowed_count", "penalty_duration"],
+      },
+    ],
+    where: { code },
+  })
     .then((result) => result.dataValues)
     .catch((error) => console.log(error));
 
